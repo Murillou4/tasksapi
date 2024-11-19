@@ -19,13 +19,18 @@ from auth_middleware import require_auth
 def me():
     try:
         #Obtém o usuário da base de dados
-        user = db.get_user(request.uid)
+        try:
+            user = db.get_user(request.uid)
+            if not user:
+                return jsonify({'message': 'User not found'}), 404
+        except Exception as e:
+            return jsonify({'message': 'Internal server error'}), 500
         photo_base64 = None
         if user[4]:
             photo_base64 = base64.b64encode(user[4]).decode('utf-8')
         return jsonify({'name': user[1], 'email': user[2], 'photo': photo_base64}), 200
     except Exception as e:
-        return jsonify({'message': f'Internal server error {e}'}), 500
+        return jsonify({'message': 'Internal server error'}), 500
     
 
 @app.route('/user/update/photo', methods=['PUT'])
@@ -39,7 +44,7 @@ def update_photo():
     try:
         photo = request.files.get('photo')
     except Exception as e:
-        return jsonify({'message': f'Internal server error {e}'}), 500
+        return jsonify({'message': 'Internal server error'}), 500
 
     if not photo:
         return jsonify({'message': 'Photo is required'}), 400

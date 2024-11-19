@@ -1,6 +1,6 @@
 import sqlite3 as sql
 from threading import local
-
+import os
 class DatabaseService:
     _thread_local = local()
     
@@ -10,7 +10,8 @@ class DatabaseService:
 
     def _init_connection(self):
         if not hasattr(self._thread_local, 'con'):
-            self._thread_local.con = sql.connect('database.db')
+            db_path = os.getenv('DATABASE_PATH') 
+            self._thread_local.con = sql.connect(db_path)
             self._thread_local.con.execute("PRAGMA foreign_keys = ON")
             self._thread_local.cur = self._thread_local.con.cursor()
 

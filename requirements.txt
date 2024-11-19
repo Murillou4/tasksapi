@@ -3,3 +3,5 @@ pyjwt
 bcrypt
 email-validator
 flask-cors
+gunicorn
+python-dotenv

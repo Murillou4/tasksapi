@@ -46,7 +46,7 @@ def login():
             return jsonify({'message': 'Invalid password, password must contain at least 8 characters, 1 uppercase letter, 1 number and 1 special character'}), 401
     #Caso ocorra um erro interno
     except Exception as e:
-        return jsonify({'message': f'Internal server error {e}'}), 500
+        return jsonify({'message': 'Internal server error'}), 500
     
     #Gera o token do usuário com o payload contendo o uid
     payload = {'uid': user[0]}
@@ -107,7 +107,7 @@ def register():
     try:
         db.create_user(uid,name,email, hashed_password,None)
     except Exception as e:
-        return jsonify({'message': f'Failed to create user {e}'}), 400
+        return jsonify({'message': 'Failed to create user'}), 400
     
     #Verifica se o usuário foi criado com sucesso
     try:
@@ -121,6 +121,6 @@ def register():
         return jsonify({'message': 'Register successful', 'token': token}), 200
 
     except Exception as e:
-        return jsonify({'message': f'Internal server error {e}'}), 500
+        return jsonify({'message':'Internal server error'}), 500
 
 

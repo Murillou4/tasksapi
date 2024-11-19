@@ -16,7 +16,7 @@ def get_tasks_by_user():
             tasks.append({'id': task[0], 'topic': task[1], 'created_at': task[2], 'completed': task[3]})
         return jsonify({'message': 'Tasks fetched successfully', 'tasks': tasks}), 200
     except Exception as e:
-        return jsonify({'message': f'Internal server error {e}'}), 500
+        return jsonify({'message': 'Internal server error'}), 500
 
 
 """
@@ -48,7 +48,7 @@ def add_task():
         db.add_task(data['topic'], iso_date, request.uid)
         return jsonify({'message': 'Task added successfully', 'task': {'id': db.cur.lastrowid, 'topic': data['topic'], 'created_at': iso_date, 'completed': False}}), 200
     except Exception as e:
-        return jsonify({'message': f'Internal server error {e}'}), 500
+        return jsonify({'message': 'Internal server error'}), 500
     
 
 @app.route('/tasks/update/topic', methods=['PUT'])
@@ -74,7 +74,7 @@ def update_task_topic():
         db.update_task_topic(data['id'], data['topic'])
         return jsonify({'message': 'Task updated successfully', 'task': {'id': data['id'], 'topic': data['topic'], 'created_at': task_raw[2], 'completed': task_raw[3]}}), 200
     except Exception as e:
-        return jsonify({'message': f'Internal server error {e}'}), 500
+        return jsonify({'message': 'Internal server error'}), 500
     
     
     
@@ -101,4 +101,4 @@ def update_task_completed():
         db.update_task_completed(data['id'], data['completed'])
         return jsonify({'message': 'Task updated successfully', 'task': {'id': data['id'], 'topic': task_raw[1], 'created_at': task_raw[2], 'completed': data['completed']}}), 200
     except Exception as e:
-        return jsonify({'message': f'Internal server error {e}'}), 500
+        return jsonify({'message': 'Internal server error'}), 500
