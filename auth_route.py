@@ -122,7 +122,7 @@ def register():
         if not user:
             return jsonify({'message': 'Failed to create user'}), 400
         #Gera o token do usuário com o payload contendo o uid
-        payload = {'uid': user.uid}
+        payload = {'uid': user[0]}
         token = JWTService.generate_user_token(payload)
         
         return jsonify({'message': 'Register successful', 'token': token}), 200
