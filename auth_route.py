@@ -26,8 +26,6 @@ import uuid
 '''
 @app.route('/auth/login', methods=['POST'])
 def login():
-
-    
     data = request.json
     email = data.get('email')
     password = data.get('password')
@@ -45,7 +43,7 @@ def login():
             return jsonify({'message': 'User not found'}), 404
         #Verifica se a senha é válida
         if not PasswordService.verify_password(password, user[3]):
-            return jsonify({'message': 'Invalid password'}), 401
+            return jsonify({'message': 'Invalid password, password must contain at least 8 characters, 1 uppercase letter, 1 number and 1 special character'}), 401
     #Caso ocorra um erro interno
     except Exception as e:
         return jsonify({'message': f'Internal server error {e}'}), 500

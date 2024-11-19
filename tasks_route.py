@@ -3,30 +3,14 @@ from jwt_service import JWTService
 from flask_app import app
 from flask_app import db
 from datetime import datetime
+from auth_middleware import require_auth
+
 
 @app.route('/tasks/byuser', methods=['GET'])
+@require_auth
 def get_tasks_by_user():
-    token = request.headers.get('Authorization')
-    #Verifica se o token foi informado
-    if not token:
-        return jsonify({'message': 'Token is required'}), 400
-    
-    #Verifica se o token é válido
-    verified_token = None
     try:
-        token = token.split(" ")[1]
-        verified_token = JWTService.verify_user_token(token)
-    except Exception as e:
-        return jsonify({'message': f'Invalid token {e}'}), 401
-
-    if not verified_token:
-        return jsonify({'message': 'Invalid token'}), 401
-    
-    #Obtém o uid do token
-    uid = verified_token['uid']
-
-    try:
-        tasks_raw = db.get_tasks(uid)
+        tasks_raw = db.get_tasks(request.uid)
         tasks = []
         for task in tasks_raw:
             tasks.append({'id': task[0], 'topic': task[1], 'created_at': task[2], 'completed': task[3]})
@@ -34,26 +18,25 @@ def get_tasks_by_user():
     except Exception as e:
         return jsonify({'message': f'Internal server error {e}'}), 500
 
-@app.route('/tasks/add', methods=['POST'])
-def add_task():
-    token = request.headers.get('Authorization')
-    #Verifica se o token foi informado
-    if not token:
-        return jsonify({'message': 'Token is required'}), 400
-    
-    #Verifica se o token é válido
-    verified_token = None
-    try:
-        token = token.split(" ")[1]
-        verified_token = JWTService.verify_user_token(token)
-    except Exception as e:
-        return jsonify({'message': f'Invalid token {e}'}), 401
 
-    if not verified_token:
-        return jsonify({'message': 'Invalid token'}), 401
-    
-    #Obtém o uid do token
-    uid = verified_token['uid']
+"""
+Adiciona uma nova tarefa para o usuário autenticado.
+
+Método: POST
+Endpoint: /tasks/add
+
+Parâmetros JSON:
+    - topic (str): O tópico ou título da tarefa.
+
+Retorna:
+    JSON:
+        - message (str): Mensagem de sucesso ou erro.
+        - task (dict, opcional): Detalhes da tarefa adicionada.
+"""
+
+@app.route('/tasks/add', methods=['POST'])
+@require_auth
+def add_task():
 
     data = request.json
 
@@ -62,33 +45,15 @@ def add_task():
     
     try:
         iso_date = datetime.now().isoformat()
-        db.add_task(data['topic'], iso_date, uid)
+        db.add_task(data['topic'], iso_date, request.uid)
         return jsonify({'message': 'Task added successfully', 'task': {'id': db.cur.lastrowid, 'topic': data['topic'], 'created_at': iso_date, 'completed': False}}), 200
     except Exception as e:
         return jsonify({'message': f'Internal server error {e}'}), 500
     
 
-@app.route('/tasks/update', methods=['PUT'])
-def update_task():
-    token = request.headers.get('Authorization')
-    #Verifica se o token foi informado
-    if not token:
-        return jsonify({'message': 'Token is required'}), 400
-    
-    #Verifica se o token é válido
-    verified_token = None
-    try:
-        token = token.split(" ")[1]
-        verified_token = JWTService.verify_user_token(token)
-    except Exception as e:
-        return jsonify({'message': f'Invalid token {e}'}), 401
-
-    if not verified_token:
-        return jsonify({'message': 'Invalid token'}), 401
-    
-    #Obtém o uid do token
-    uid = verified_token['uid']
-
+@app.route('/tasks/update/topic', methods=['PUT'])
+@require_auth
+def update_task_topic():    
     data = request.json
 
     if not data['id']:
@@ -97,5 +62,43 @@ def update_task():
     if not data['topic']:
         return jsonify({'message': 'Topic is required'}), 400
     
+    try:
+        #Obtém a tarefa da base de dados e verifica se existe
+        task_raw = db.get_task(data['id'])
+        if not task_raw:
+            return jsonify({'message': 'Task not found'}), 404
+        #Verifica se o usuário é o dono da tarefa
+        if task_raw[4] != request.uid:
+            return jsonify({'message': 'You are not the owner of this task'}), 403
+        #Atualiza o tópico da tarefa
+        db.update_task_topic(data['id'], data['topic'])
+        return jsonify({'message': 'Task updated successfully', 'task': {'id': data['id'], 'topic': data['topic'], 'created_at': task_raw[2], 'completed': task_raw[3]}}), 200
+    except Exception as e:
+        return jsonify({'message': f'Internal server error {e}'}), 500
     
     
+    
+@app.route('/tasks/update/completed', methods=['PUT'])
+@require_auth
+def update_task_completed():
+    data = request.json
+
+    if not data['id']:
+        return jsonify({'message': 'Id is required'}), 400
+    
+    if not data['completed']:
+        return jsonify({'message': 'Completed is required'}), 400
+    
+    try:
+        #Obtém a tarefa da base de dados e verifica se existe
+        task_raw = db.get_task(data['id'])
+        if not task_raw:
+            return jsonify({'message': 'Task not found'}), 404
+        #Verifica se o usuário é o dono da tarefa
+        if task_raw[4] != request.uid:
+            return jsonify({'message': 'You are not the owner of this task'}), 403
+        #Atualiza o tópico da tarefa
+        db.update_task_completed(data['id'], data['completed'])
+        return jsonify({'message': 'Task updated successfully', 'task': {'id': data['id'], 'topic': task_raw[1], 'created_at': task_raw[2], 'completed': data['completed']}}), 200
+    except Exception as e:
+        return jsonify({'message': f'Internal server error {e}'}), 500

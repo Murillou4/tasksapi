@@ -1,4 +1,5 @@
 flask
 pyjwt
 bcrypt
-email-validator 
+email-validator
+flask-cors

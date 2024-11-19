@@ -3,6 +3,7 @@ from jwt_service import JWTService
 from flask_app import app
 from flask_app import db
 import base64
+from auth_middleware import require_auth
 '''
     Endpoint para obter informações do usuário autenticado.
 
@@ -14,34 +15,11 @@ import base64
         json: Dicionário com as informações do usuário ou mensagem de erro
 '''
 @app.route('/user/me', methods=['GET'])
+@require_auth
 def me():
-
-    token = request.headers.get('Authorization')
-    #Verifica se o token foi informado
-    if not token:
-        return jsonify({'message': 'Token is required'}), 400
-    
-    #Verifica se o token é válido
-    verified_token = None
-
-    try:
-        token = token.split(" ")[1]
-        verified_token = JWTService.verify_user_token(token)
-    except Exception as e:
-        return jsonify({'message': f'Invalid token {e}'}), 401
-
-    if not verified_token:
-        return jsonify({'message': 'Invalid token'}), 401
-    
-    #Obtém o uid do token
-    uid = verified_token['uid']
-
-    if not uid:
-        return jsonify({'message': 'Please return to login'}), 401
-    
     try:
         #Obtém o usuário da base de dados
-        user = db.get_user(uid)
+        user = db.get_user(request.uid)
         photo_base64 = None
         if user[4]:
             photo_base64 = base64.b64encode(user[4]).decode('utf-8')
@@ -51,26 +29,8 @@ def me():
     
 
 @app.route('/user/update/photo', methods=['PUT'])
+@require_auth
 def update_photo():
-    token = request.headers.get('Authorization')
-    #Verifica se o token foi informado
-    if not token:
-        return jsonify({'message': 'Token is required'}), 400
-    
-    #Verifica se o token é válido
-    verified_token = None
-    try:
-        token = token.split(" ")[1]
-        verified_token = JWTService.verify_user_token(token)
-    except Exception as e:
-        return jsonify({'message': f'Invalid token {e}'}), 401
-
-    if not verified_token:
-        return jsonify({'message': 'Invalid token'}), 401
-    
-    #Obtém o uid do token
-    uid = verified_token['uid']
-
     if not request.files.get('photo'):
         return jsonify({'message': 'Photo is required'}), 400
     
@@ -92,7 +52,7 @@ def update_photo():
     
     try:
         photo_bytes = photo.read()
-        db.update_user_photo(uid, photo_bytes)
+        db.update_user_photo(request.uid, photo_bytes)
         #Devolver também a foto atualizada
         photo_base64 = base64.b64encode(photo_bytes).decode('utf-8')
         return jsonify({'message': 'Photo updated successfully', 'photo': photo_base64}), 200

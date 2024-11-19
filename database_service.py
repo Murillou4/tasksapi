@@ -47,7 +47,11 @@ class DatabaseService:
     def add_task(self, topic, created_at, uid):
         self.cur.execute('''INSERT INTO TASKS (topic, created_at, uid) VALUES (?, ?, ?)''', (topic, created_at, uid))
         self.con.commit()
-
+        
+    def get_task(self, id):
+        self.cur.execute('''SELECT * FROM TASKS WHERE id = ?''', (id,))
+        return self.cur.fetchone()
+    
     def get_tasks(self, uid):
         self.cur.execute('''SELECT * FROM TASKS WHERE uid = ?''', (uid,))
         return self.cur.fetchall()

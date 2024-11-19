@@ -1,4 +1,5 @@
 from bcrypt import hashpw, gensalt, checkpw
+import re
 
 class PasswordService:
     @staticmethod
@@ -20,4 +21,19 @@ class PasswordService:
         """
         Verifica se a senha é válida
         """
-        return len(password) >= 8
+        if len(password) < 8:
+            return False
+        
+        # Pelo menos uma letra maiúscula
+        if not re.search(r'[A-Z]', password):
+            return False
+            
+        # Pelo menos um número
+        if not re.search(r'\d', password):
+            return False
+            
+        # Pelo menos um caractere especial
+        if not re.search(r'[!@#$%^&*(),.?":{}|<>]', password):
+            return False
+            
+        return True
