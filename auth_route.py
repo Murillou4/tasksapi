@@ -6,7 +6,7 @@ from password_service import PasswordService
 from flask_app import app
 from flask_app import db
 import uuid
-
+from log_service import LogService
 
 '''
     Rota para login do usuário
@@ -46,6 +46,7 @@ def login():
             return jsonify({'message': 'Invalid password, password must contain at least 8 characters, 1 uppercase letter, 1 number and 1 special character'}), 401
     #Caso ocorra um erro interno
     except Exception as e:
+        LogService.error(f'Error on login route: {e}')
         return jsonify({'message': 'Internal server error'}), 500
     
     #Gera o token do usuário com o payload contendo o uid
@@ -88,8 +89,13 @@ def register():
         return jsonify({'message': 'Password is required'}), 400
     
     #verifique se o email já existe na base de dados
-    if db.get_user_by_email(email):
-        return jsonify({'message': 'Email already exists'}), 400
+    try:
+        has_user = db.get_user_by_email(email)
+        if has_user:
+            return jsonify({'message': 'Email already exists'}), 400
+    except Exception as e:
+        LogService.error(f'Error on register route: {e}')
+        return jsonify({'message': 'Internal server error'}), 500
     #Verifica se o email é válido
     try:
         validate_email(email)
@@ -107,6 +113,7 @@ def register():
     try:
         db.create_user(uid,name,email, hashed_password,None)
     except Exception as e:
+        LogService.error(f'Error on register route: {e}')
         return jsonify({'message': 'Failed to create user'}), 400
     
     #Verifica se o usuário foi criado com sucesso
@@ -121,6 +128,7 @@ def register():
         return jsonify({'message': 'Register successful', 'token': token}), 200
 
     except Exception as e:
+        LogService.error(f'Error on register route: {e}')
         return jsonify({'message':'Internal server error'}), 500
 
 

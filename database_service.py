@@ -1,6 +1,8 @@
 import sqlite3 as sql
 from threading import local
 import os
+from log_service import LogService
+
 class DatabaseService:
     _thread_local = local()
     
@@ -10,10 +12,15 @@ class DatabaseService:
 
     def _init_connection(self):
         if not hasattr(self._thread_local, 'con'):
-            db_path = os.getenv('DATABASE_PATH') 
-            self._thread_local.con = sql.connect(db_path)
-            self._thread_local.con.execute("PRAGMA foreign_keys = ON")
-            self._thread_local.cur = self._thread_local.con.cursor()
+            try:
+                db_path = os.getenv('DATABASE_PATH')
+                LogService.info(f"Iniciando conexão com o banco de dados: {db_path}")
+                self._thread_local.con = sql.connect(db_path)
+                self._thread_local.con.execute("PRAGMA foreign_keys = ON")
+                self._thread_local.cur = self._thread_local.con.cursor()
+            except Exception as e:
+                LogService.error("Erro ao conectar com o banco de dados", e)
+                raise e
 
     @property
     def con(self):

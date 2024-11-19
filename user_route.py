@@ -4,6 +4,7 @@ from flask_app import app
 from flask_app import db
 import base64
 from auth_middleware import require_auth
+from log_service import LogService
 '''
     Endpoint para obter informações do usuário autenticado.
 
@@ -30,6 +31,7 @@ def me():
             photo_base64 = base64.b64encode(user[4]).decode('utf-8')
         return jsonify({'name': user[1], 'email': user[2], 'photo': photo_base64}), 200
     except Exception as e:
+        LogService.error(f'Error on me route: {e}')
         return jsonify({'message': 'Internal server error'}), 500
     
 
@@ -62,6 +64,7 @@ def update_photo():
         photo_base64 = base64.b64encode(photo_bytes).decode('utf-8')
         return jsonify({'message': 'Photo updated successfully', 'photo': photo_base64}), 200
     except Exception as e:
+        LogService.error(f'Error on update photo route: {e}')
         return jsonify({'message': 'Internal server error'}), 500
     
 
