@@ -13,7 +13,12 @@ class DatabaseService:
     def _init_connection(self):
         if not hasattr(self._thread_local, 'con'):
             try:
-                db_path = os.getenv('DATABASE_PATH')
+                db_path = os.getenv('DATABASE_PATH', '/data/database.db')
+                db_dir = os.path.dirname(db_path)
+                
+                # Garante que o diretório existe
+                os.makedirs(db_dir, exist_ok=True)
+                
                 LogService.info(f"Iniciando conexão com o banco de dados: {db_path}")
                 self._thread_local.con = sql.connect(db_path)
                 self._thread_local.con.execute("PRAGMA foreign_keys = ON")
