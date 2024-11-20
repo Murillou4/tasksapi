@@ -11,21 +11,15 @@ class LogService:
             LogService._logger = logging.getLogger('flask_api')
             LogService._logger.setLevel(logging.INFO)
 
-            # Configuração para salvar em arquivo
-            log_path = os.getenv('LOG_PATH', 'api.log')
-            file_handler = logging.FileHandler(log_path)
-            file_handler.setLevel(logging.INFO)
-
-            # Configuração para console
+            # Apenas configuração para console no Railway
             console_handler = logging.StreamHandler()
             console_handler.setLevel(logging.INFO)
 
-            # Formato do log
-            formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
-            file_handler.setFormatter(formatter)
+            # Formato do log com mais informações para debug
+            formatter = logging.Formatter(
+                '%(asctime)s - %(levelname)s - [%(filename)s:%(lineno)d] - %(message)s'
+            )
             console_handler.setFormatter(formatter)
-
-            LogService._logger.addHandler(file_handler)
             LogService._logger.addHandler(console_handler)
 
         return LogService._logger
