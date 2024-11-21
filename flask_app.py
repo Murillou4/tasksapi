@@ -17,21 +17,6 @@ def health_check():
         'message': 'API is running'
     }), 200
 
-# Importando as rotas
-from auth_route import *
-from user_route import *
-from tasks_route import *
-
-"""
-    Handles 429 error and logs it in the structured log service.
-
-    Args:
-        e (Exception): The exception that triggered the 429 error.
-
-    Returns:
-        A response with a JSON object containing a message and the error description.
-        The status code is 429.
-"""
 @app.errorhandler(429)
 def ratelimit_handler(e):
 
@@ -40,10 +25,12 @@ def ratelimit_handler(e):
         "message": "Too many requests. Please try again later.",
         "error": str(e.description)
     }), 429
+# Importando as rotas
+from auth_route import *
+from user_route import *
+from tasks_route import *
 
 
 
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)  
 
 
