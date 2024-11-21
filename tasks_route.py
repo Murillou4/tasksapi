@@ -66,6 +66,24 @@ def add_task():
         LogService.error(f'Error on add task route: {e}')
         return jsonify({'message': 'Internal server error'}), 500
     
+@limiter.limit("20 per minute; 200 per hour")
+@app.route('/tasks/delete', methods=['DELETE'])
+@require_auth
+def delete_task():
+    task_id = request.args.get('id')
+    
+    if not task_id:
+        return jsonify({'message': 'Id is required'}), 400
+    
+    try:
+        db.delete_task(task_id)
+        return jsonify({'message': 'Task deleted successfully'}), 200
+    except Exception as e:
+        LogService.error(f'Error on delete task route: {e}')
+        return jsonify({'message': 'Internal server error'}), 500
+    
+    
+    
 @limiter.limit("30 per minute; 300 per hour")
 @app.route('/tasks/update/topic', methods=['PUT'])
 @require_auth
