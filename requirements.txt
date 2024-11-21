@@ -5,3 +5,6 @@ email-validator
 flask-cors
 gunicorn
 python-dotenv
+flask-limiter
+marshmallow
+Pillow

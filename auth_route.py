@@ -7,6 +7,10 @@ from flask_app import app
 from flask_app import db
 import uuid
 from log_service import LogService
+from limiter_service import limiter
+from schemas import UserSchema
+from marshmallow import ValidationError
+import json
 
 '''
     Rota para login do usuário
@@ -24,6 +28,7 @@ from log_service import LogService
     Returns:
         json: Dicionário com o token do usuário
 '''
+@limiter.limit("5 per minute; 20 per hour")
 @app.route('/auth/login', methods=['POST'])
 def login():
     data = request.json
@@ -73,10 +78,18 @@ def login():
     Returns:
         json: Dicionário com o token do usuário ou mensagem de erro
 '''
+@limiter.limit("3 per minute; 10 per hour")
 @app.route('/auth/register', methods=['POST'])
 def register():
-
-    data = request.json
+    # Validar dados de entrada
+    try:
+        schema = UserSchema()
+        data = schema.load(request.json)
+    except ValidationError as e:
+        # Pega o primeiro erro do primeiro campo que falhou na validação
+        LogService.error(f'Error on register route: {e.messages}')
+        return jsonify({'message': 'Invalid data'}), 400
+    
     name = data.get('name')
     email = data.get('email')
     password = data.get('password')
@@ -103,7 +116,7 @@ def register():
         return jsonify({'message': 'Invalid email'}), 400
     #Verifica se a senha é válida
     if not PasswordService.is_password_valid(password):
-        return jsonify({'message': 'Invalid password'}), 400
+        return jsonify({'message': 'Invalid password, password must contain at least 8 characters, 1 uppercase letter, 1 number and 1 special character'}), 400
     #Gera o hash da senha
     hashed_password = PasswordService.hash_password(password)
     #Gera o uid do usuário

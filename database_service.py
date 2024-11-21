@@ -13,7 +13,7 @@ class DatabaseService:
     def _init_connection(self):
         if not hasattr(self._thread_local, 'con'):
             try:
-                db_path = os.getenv('DATABASE_PATH', '/data/database.db')
+                db_path = os.getenv('DATABASE_PATH')
                 db_dir = os.path.dirname(db_path)
                 
                 # Garante que o diretório existe

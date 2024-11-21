@@ -1,11 +1,14 @@
 from flask import request, jsonify
-from jwt_service import JWTService
 from flask_app import app
 from flask_app import db
 from datetime import datetime
 from auth_middleware import require_auth
 from log_service import LogService
+from limiter_service import limiter
+from schemas import TaskSchema
+from marshmallow import ValidationError
 
+@limiter.limit("50 per minute")
 @app.route('/tasks/byuser', methods=['GET'])
 @require_auth
 def get_tasks_by_user():
@@ -34,25 +37,36 @@ Retorna:
         - message (str): Mensagem de sucesso ou erro.
         - task (dict, opcional): Detalhes da tarefa adicionada.
 """
-
+@limiter.limit("20 per minute; 200 per hour")
 @app.route('/tasks/add', methods=['POST'])
 @require_auth
 def add_task():
-
-    data = request.json
-
-    if not data['topic']:
-        return jsonify({'message': 'Topic is required'}), 400
-    
     try:
+        # Validar dados de entrada
+        schema = TaskSchema()
+        data = schema.load(request.json)
+        
+        # Criar tarefa
         iso_date = datetime.now().isoformat()
         db.add_task(data['topic'], iso_date, request.uid)
-        return jsonify({'message': 'Task added successfully', 'task': {'id': db.cur.lastrowid, 'topic': data['topic'], 'created_at': iso_date, 'completed': False}}), 200
+        
+        return jsonify({
+            'message': 'Task added successfully',
+            'task': {
+                'id': db.cur.lastrowid,
+                'topic': data['topic'],
+                'created_at': iso_date,
+                'completed': False
+            }
+        }), 200
+        
+    except ValidationError as e:
+        return jsonify({'message': 'Invalid data', 'errors': e.messages}), 400
     except Exception as e:
         LogService.error(f'Error on add task route: {e}')
         return jsonify({'message': 'Internal server error'}), 500
     
-
+@limiter.limit("30 per minute; 300 per hour")
 @app.route('/tasks/update/topic', methods=['PUT'])
 @require_auth
 def update_task_topic():    

@@ -1,6 +1,7 @@
 import logging
 import os
 from datetime import datetime
+import json
 
 class LogService:
     _logger = None
@@ -35,4 +36,20 @@ class LogService:
     @staticmethod
     def info(message: str):
         logger = LogService.get_logger()
-        logger.info(message) 
+        logger.info(message)
+
+    @staticmethod
+    def rate_limit_exceeded(request_path: str, limit: str):
+        logger = LogService.get_logger()
+        logger.warning(f"Rate limit exceeded for path: {request_path} - Limit: {limit}")
+
+    @staticmethod
+    def structured_log(level: str, event: str, data: dict):
+        log_entry = {
+            'timestamp': datetime.now().isoformat(),
+            'level': level,
+            'event': event,
+            'data': data
+        }
+        logger = LogService.get_logger()
+        getattr(logger, level.lower())(json.dumps(log_entry))
