@@ -70,7 +70,9 @@ def add_task():
 @app.route('/tasks/delete', methods=['DELETE'])
 @require_auth
 def delete_task():
-    task_id = request.args.get('id')
+    data = request.json
+
+    task_id = data['id']
     
     if not task_id:
         return jsonify({'message': 'Id is required'}), 400
